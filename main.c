@@ -1,6 +1,10 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include <avr/io.h>
 #include <util/delay.h>
-
+#include <avr/interrupt.h>
+#include <avr/pgmspace.h>
 //*****************************************************************************
 // Hardware init
 //*****************************************************************************
@@ -57,11 +61,38 @@ void pwmInit() {
 	TCCR2B|=(1<<CS21);
 }
 
+//*****************************************************************************
+// Initialization at 115.2k baud
+//*****************************************************************************
+void ioInit(void) {
+	
+	// Initialize UART0
+	UCSR0B |= (1 << RXEN0) | (1 << TXEN0); // Turn on the transmission and reception circuitry
+	UCSR0C |= (1 << UCSZ00) | (1 << UCSZ01); // Use 8-bit character sizes
+	UCSR0A |= (1 << U2X0); // double speed
+	UBRR0H = 0;
+	UBRR0L = 8;	// 115200 - -3.5% error (seems OK with 'screen' despite high error)
+	
+	UCSR0B |= (1 << RXCIE0); // Enable the USART Receive Complete interrupt (USART_RXC)
+}
+
+
+//*****************************************************************************
+// Interrup Service Routine Serial I/O
+//*****************************************************************************
+ISR(USART_RX_vect) {
+	// read the register
+	char rxByte=UDR0;
+	// send the data back out
+	UDR0=rxByte;
+}
 
 
 int main(void)
 {
 	pwmInit();
+	ioInit();
+	sei(); // enable global interrrupt flag
 	OCR0A=1; // blue
 	OCR0B=0; // green
 	OCR2B=1; // red

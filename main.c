@@ -78,7 +78,7 @@ void ioInit(void) {
 
 
 //*****************************************************************************
-// Interrup Service Routine Serial I/O
+// Interrupt Service Routine Serial I/O
 //*****************************************************************************
 ISR(USART_RX_vect) {
 	// read the register
